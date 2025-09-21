@@ -7,113 +7,122 @@ session_start();
 $conn = mysqli_connect('localhost','root','','kasir');
 
 
-
-
-
-
-
-// Untuk login
-
-// if(isset($_POST['login'])){
-//     // untuk variabel
-//     $username =$_POST['username'];
-//     $password =$_POST['password'];
-
-//     $check = mysqli_query($conn,"SELECT * FROM user WHERE username='$username' and password='$password'");
-//     $hitung = mysqli_num_rows($check);
-
-//     if($hitung>0){
-//         // jika datanya ditemukan
-//         // berhasil login
-
-//         $_SESSION['login'] = 'true';
-//         header('location:login.php');
-//     } else{
-//         // data tidak ditemukan
-//         // gagal login
-//         echo '
-//         <script>alert("username atau password salah");
-//         windows.location.href="login.php"
-//         </script>
-//         ';
+// // Jika tombol bayar ditekan
+// if(isset($_POST['bayar'])){
+//     // Konversi ke float untuk memastikan nilai numerik
+//     $total = floatval(str_replace(['Rp', ',', ' '], '', $_POST['total']));
+//     $bayar = floatval($_POST['bayar']);
+    
+//     // Validasi input
+//     if($bayar < $total) {
+//         $_SESSION['error'] = "Pembayaran kurang dari total!";
+//         header("Location: menu.php");
+//         exit();
+//     }
+    
+//     $kembali = $bayar - $total; 
+    
+//     // Simpan transaksi ke database
+//     $insert = mysqli_query($conn, "INSERT INTO penjualan (total, bayar, kembali, tanggal) VALUES ('$total', '$bayar', '$kembali', NOW())");
+    
+//     if($insert){
+//         $id_penjualan = mysqli_insert_id($conn);
+        
+//         // Simpan detail transaksi
+//         foreach($_SESSION['cart'] as $key => $value){
+//             $id_barang = $value['id'];
+//             $qty = $value['qty'];
+//             $harga = $value['harga'];
+//             $subtotal = $value['qty'] * $value['harga'];
+            
+//             $insert_detail = mysqli_query($conn, "INSERT INTO detail_penjualan (id_penjualan, id_barang, qty, harga, subtotal) 
+//                         VALUES ('$id_penjualan', '$id_barang', '$qty', '$harga', '$subtotal')");
+    
+//     if (!$insert_detail) {
+//         // Handle error
+//         $_SESSION['error'] = "Gagal menyimpan detail transaksi: " . mysqli_error($conn);
+//         header("Location: menu.php");
+//         exit();
+//     }
+            
+//             // Kurangi stok barang
+//                $update_stock = mysqli_query($conn, "UPDATE barang_masuk SET jumlah = jumlah - $qty WHERE id = '$id_barang'");
+    
+//     if (!$update_stock) {
+//         $_SESSION['error'] = "Gagal update stok barang: " . mysqli_error($conn);
+//         header("Location: index.php");
+//         exit();
+//     }
+//         }
+        
+//         // Kosongkan keranjang
+//         unset($_SESSION['cart']);
+        
+//         // Redirect ke halaman struk
+//         header("Location: struk.php?id=$id_penjualan");
 //     }
 // }
 
+// // Jika tombol tambah ke keranjang ditekan
+//     if(isset($_POST['tambah_keranjang'])){
+//         $idbarang = $_POST['idbarang'];
+//         $qty = $_POST['qty'];
+        
+//         // Ambil data barang dari database
+//         $barang = mysqli_query($conn, "SELECT * FROM barang_masuk WHERE id='$idbarang'");
+//         $data = mysqli_fetch_array($barang);
+        
+
+//         if($data['jumlah'] < $qty) {
+//             $_SESSION['error'] = "Stok tidak cukup! Stok tersedia: " . $data['jumlah'];
+//             header("Location: menu.php");
+//             exit();
+//         }
 
 
-
-
-
-//Untuk Masuk.php
-
-
-if(isset($_POST['barangmasuk'])){
-    $tanggal = $_POST['tanggal'];
-    $nama_barang = $_POST['nama_barang'];
-    $jumlah = $_POST['jumlah'];
-    $harga = $_POST['harga'];
-    
-    $insert = mysqli_query($conn, "INSERT INTO barang_masuk (tanggal, nama_barang, jumlah, harga) 
-                                  VALUES ('$tanggal', '$nama_barang', '$jumlah', '$harga')");
-    
-    if($insert){
-        echo "<script>alert('Data berhasil ditambahkan');</script>";
-        echo "<script>window.location.href='masuk.php';</script>";
-    } else {
-        echo "<script>alert('Gagal menambahkan data');</script>";
-    }
-}
-
-// Proses hapus barang masuk
-if(isset($_GET['hapus'])){
-    $id = $_GET['hapus'];
-    $delete = mysqli_query($conn, "DELETE FROM barang_masuk WHERE id='$id'");
-    
-    if($delete){
-        echo "<script>alert('Data berhasil dihapus');</script>";
-        echo "<script>window.location.href='masuk.php';</script>";
-    } else {
-        echo "<script>alert('Gagal menghapus data');</script>";
-    }
-}
-
-// Proses update barang masuk
-if(isset($_POST['updatebarang'])){
-    $id = $_POST['id'];
-    $tanggal = $_POST['tanggal'];
-    $nama_barang = $_POST['nama_barang'];
-    $jumlah = $_POST['jumlah'];
-    $harga = $_POST['harga'];
-    
-    $update = mysqli_query($conn, "UPDATE barang_masuk SET 
-                                tanggal='$tanggal', 
-                                nama_barang='$nama_barang', 
-                                jumlah='$jumlah', 
-                                harga='$harga' 
-                                WHERE id='$id'");
-    
-    if($update){
-        echo "<script>alert('Data berhasil diupdate');</script>";
-        echo "<script>window.location.href='masuk.php';</script>";
-    } else {
-        echo "<script>alert('Gagal mengupdate data');</script>";
-    }
-}
-
-
-// if(!isset($_GET['id'])) {
-//     header("Location: menu.php");
-//     exit();
+//         // Inisialisasi keranjang jika belum ada
+//         if(!isset($_SESSION['cart'])){
+//             $_SESSION['cart'] = array();
+//         }
+        
+//         // Cek apakah barang sudah ada di keranjang
+//         $index = -1;
+//         foreach($_SESSION['cart'] as $key => $value){
+//             if($value['id'] == $idbarang){
+//                 $index = $key;
+//                 break;
+//             }
+//         }
+        
+//         if($index == -1){
+//             // Tambah barang baru ke keranjang
+//             $_SESSION['cart'][] = array(
+//                 'id' => $idbarang,
+//                 'nama' => $data['nama_barang'],
+//                 'harga' => $data['harga'],
+//                 'qty' => $qty
+//             );
+//         } else {
+//             // Update quantity jika barang sudah ada
+//             $_SESSION['cart'][$index]['qty'] += $qty;
+//         }
 // }
 
-// $id_penjualan = $_GET['id'];
-// $penjualan = mysqli_query($conn, "SELECT * FROM penjualan WHERE id_penjualan = '$id_penjualan'");
-// $data_penjualan = mysqli_fetch_array($penjualan);
+// // Jika tombol hapus dari keranjang ditekan
+//     if(isset($_GET['hapus'])){
+//         $index = $_GET['hapus'];
+//         unset($_SESSION['cart'][$index]);
+//         // Reindex array
+//         $_SESSION['cart'] = array_values($_SESSION['cart']);
+//         header("Location: menu.php");
+//     }
 
-// $detail = mysqli_query($conn, "SELECT * FROM detail_penjualan 
-//                               JOIN barang_masuk ON detail_penjualan.id_barang = barang_masuk.id 
-//                               WHERE id_penjualan = '$id_penjualan'");
-
-
+// // Hitung total belanja
+//     $total = 0;
+//     if(isset($_SESSION['cart'])){
+//         foreach($_SESSION['cart'] as $key => $value){
+//             $total += $value['harga'] * $value['qty'];
+//         }
+//     }
 
 ?> 
